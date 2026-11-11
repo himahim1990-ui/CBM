@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  حاسبة CBM ومحاكاة رص الكراتين داخل الحاوية 3D
+  تطوير: م. إبراهيم السيد إبراهيم (PMP)
+  LinkedIn: https://www.linkedin.com/in/ibrahim-mohamed-%F0%9F%87%AA%F0%9F%87%AC-%F0%9F%87%B0%F0%9F%87%BF-pmp-438b4b1a2/
+  WhatsApp: +20 101 898 3277
+  GitHub  : https://github.com/   ← ضع رابط حسابك هنا قبل النشر
+  ============================================================
+  طريقة النشر على GitHub Pages:
+   1) أنشئ مستودعاً جديداً (New repository) باسم cbm-container-tool
+   2) ارفع هذا الملف باسم index.html
+   3) Settings → Pages → Source: Deploy from a branch → main / (root) → Save
+   4) انتظر دقيقة ثم افتح: https://<username>.github.io/cbm-container-tool/
+  ============================================================
+-->
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>حاسبة CBM ومحاكاة رص الكراتين داخل الحاوية 3D | م. إبراهيم السيد</title>
+<meta name="description" content="أداة مجانية لحساب CBM الشحنة ومحاكاة رص الكراتين داخل الحاوية ثلاثية الأبعاد — تطوير م. إبراهيم السيد إبراهيم">
+<meta name="author" content="م. إبراهيم السيد إبراهيم">
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#0f1620; --panel2:#141d29; --line:#22303f;
+    --txt:#e6edf5; --muted:#8ea3b8; --accent:#22d3ee; --accent2:#f59e0b;
+    --ok:#34d399; --bad:#f87171; --wa:#25d366; --li:#0a66c2; --gh:#6e7681;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    font-family:"Segoe UI",Tahoma,"Noto Kufi Arabic",system-ui,-apple-system,sans-serif;
+    background:var(--bg); color:var(--txt); overflow:hidden;
+  }
+  .app{display:flex; height:100vh; direction:rtl}
+
+  /* ===== لوحة التحكم ===== */
+  .panel{
+    width:372px; flex:0 0 372px; background:var(--panel);
+    border-inline-start:1px solid var(--line);
+    overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px;
+  }
+  .panel::-webkit-scrollbar{width:8px}
+  .panel::-webkit-scrollbar-thumb{background:#243040;border-radius:8px}
+  .panel::-webkit-scrollbar-track{background:transparent}
+
+  .brand h1{font-size:17px;margin:0 0 4px;font-weight:700}
+  .brand p{font-size:12px;color:var(--muted);margin:0;line-height:1.6}
+  .brand .dot{color:var(--accent)}
+
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .card h2{font-size:12px;margin:0 0 11px;color:var(--muted);font-weight:700;letter-spacing:.4px;
+    display:flex;align-items:center;gap:7px}
+  .card h2::before{content:"";width:3px;height:13px;border-radius:3px;background:var(--accent)}
+
+  .field{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--muted);font-weight:600}
+  .field input,.field select{
+    background:#0b1219;border:1px solid var(--line);color:var(--txt);
+    border-radius:9px;padding:9px 10px;font-size:14px;font-family:inherit;width:100%;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .field input:focus,.field select:focus{
+    outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(34,211,238,.13);
+  }
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .mt{margin-top:10px}
+
+  .check{display:flex;align-items:center;gap:8px;margin-top:11px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
+  .check input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+  .check span{line-height:1.4}
+
+  .ctag{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+  .ctag span{font-size:11px;background:#0b1219;border:1px solid var(--line);border-radius:7px;
+    padding:4px 8px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .ctag b{color:var(--txt);font-weight:600}
+
+  /* ===== النتائج ===== */
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stat{background:#0b1219;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+  .stat .k{font-size:10.5px;color:var(--muted);margin-bottom:3px;font-weight:600}
+  .stat .v{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+  .stat .v small{font-size:10px;font-weight:600;color:var(--muted);margin-inline-start:2px}
+  .stat.wide{grid-column:span 2}
+
+  .util{margin-top:11px}
+  .util-head{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);
+    margin-bottom:6px;font-weight:600}
+  .util-head b{color:var(--txt);font-size:13px;font-variant-numeric:tabular-nums}
+  .bar{height:8px;background:#0b1219;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+  .bar > i{display:block;height:100%;width:0;border-radius:6px;
+    background:linear-gradient(90deg,#22d3ee,#34d399);transition:width .45s cubic-bezier(.4,0,.2,1)}
+
+  .banner{margin-top:11px;border-radius:10px;padding:9px 11px;font-size:12.5px;font-weight:700;
+    display:flex;align-items:center;gap:8px;line-height:1.4}
+  .banner.ok{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.35);color:#6ee7b7}
+  .banner.bad{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#fca5a5}
+  .banner.warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.35);color:#fcd34d}
+  .banner .ico{font-size:15px;flex:0 0 auto}
+
+  .details{margin-top:11px;font-size:12px;color:var(--muted);line-height:1.9;
+    background:#0b1219;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .details div{display:flex;justify-content:space-between;gap:10px}
+  .details b{color:var(--txt);font-weight:700;font-variant-numeric:tabular-nums}
+
+  /* ===== الأزرار ===== */
+  .actions{display:flex;gap:8px;margin-top:2px}
+  .btn{
+    flex:1;border:1px solid var(--line);background:#0b1219;color:var(--txt);
+    padding:11px 12px;border-radius:11px;font-size:13px;font-weight:700;font-family:inherit;
+    cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px;
+  }
+  .btn:hover{border-color:#33475c;background:#101a25}
+  .btn.primary{background:linear-gradient(135deg,#0ea5b7,#0891b2);border-color:#0ea5b7;color:#04212a}
+  .btn.primary:hover{filter:brightness(1.1)}
+
+  /* ===== كارت المطوّر ===== */
+  .dev-card{
+    background:linear-gradient(150deg,#101c27 0%,#0c141c 100%);
+    border-color:#1e3a4a;
+  }
+  .dev-head{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+  .dev-avatar{
+    width:44px;height:44px;flex:0 0 44px;border-radius:12px;
+    background:linear-gradient(135deg,#22d3ee,#0ea5b7);
+    color:#04212a;font-weight:900;font-size:15px;
+    display:flex;align-items:center;justify-content:center;
+    letter-spacing:.5px;box-shadow:0 6px 16px -6px rgba(34,211,238,.6);
+  }
+  .dev-name{font-size:13.5px;font-weight:800;color:#e6edf5;line-height:1.3}
+  .dev-role{font-size:11px;color:#8ea3b8;margin-top:3px}
+
+  .dev-cta{
+    font-size:12.5px;color:#c9d6e3;background:#0b1219;
+    border:1px dashed #2a3f52;border-radius:10px;
+    padding:10px 11px;margin:0 0 11px;text-align:center;line-height:1.65;font-weight:600;
+  }
+  .dev-cta b{color:var(--accent)}
+
+  .dev-links{display:flex;flex-direction:column;gap:7px}
+  .dev-link{
+    display:flex;align-items:center;gap:9px;
+    padding:9px 12px;border-radius:10px;
+    text-decoration:none;font-size:12.5px;font-weight:700;
+    border:1px solid var(--line);background:#0b1219;color:var(--txt);
+    transition:all .18s;
+  }
+  .dev-link svg{width:17px;height:17px;flex:0 0 17px}
+  .dev-link:hover{transform:translateX(-3px)}
+  .dev-link.wa:hover{border-color:var(--wa);background:rgba(37,211,102,.08);color:#5ee89a}
+  .dev-link.li:hover{border-color:var(--li);background:rgba(10,102,194,.10);color:#6cb6ff}
+  .dev-link.gh:hover{border-color:var(--gh);background:rgba(110,118,129,.10);color:#c9d1d9}
+  .dev-link .lbl{margin-inline-start:auto;font-weight:600;color:var(--muted);font-size:11.5px;direction:ltr}
+
+  .dev-credit{
+    margin-top:11px;padding-top:10px;border-top:1px solid var(--line);
+    font-size:10.5px;color:#5d7288;text-align:center;line-height:1.7;
+  }
+  .dev-credit b{color:#8ea3b8}
+
+  /* ===== المشهد ===== */
+  .stage{flex:1;position:relative;min-width:0;background:radial-gradient(circle at 50% 40%,#101a26,#080c11 75%)}
+  canvas{display:block;width:100%;height:100%}
+
+  .viewbar{
+    position:absolute;top:14px;inset-inline-start:14px;display:flex;gap:5px;
+    background:rgba(11,18,25,.78);backdrop-filter:blur(10px);
+    padding:6px;border-radius:12px;border:1px solid var(--line);z-index:5;
+  }
+  .viewbar button{
+    background:transparent;border:none;color:var(--muted);font-family:inherit;
+    font-size:12px;font-weight:700;padding:7px 11px;border-radius:8px;cursor:pointer;
+    transition:all .15s;white-space:nowrap;
+  }
+  .viewbar button:hover{background:#18222f;color:var(--txt)}
+  .viewbar button.active{background:var(--accent);color:#04212a}
+
+  /* ===== شارة المطوّر في المشهد ===== */
+  .dev-badge{
+    position:absolute;top:14px;inset-inline-end:14px;z-index:5;
+    background:rgba(11,18,25,.78);backdrop-filter:blur(10px);
+    border:1px solid var(--line);border-radius:12px;
+    padding:8px 13px;font-size:11.5px;color:var(--muted);
+    display:flex;align-items:center;gap:9px;direction:rtl;
+    box-shadow:0 8px 24px -12px rgba(0,0,0,.8);
+  }
+  .dev-badge span{opacity:.75}
+  .dev-badge b{color:var(--accent);font-weight:800}
+  .dev-badge a{
+    color:var(--muted);text-decoration:none;font-weight:700;font-size:11px;
+    border-inline-start:1px solid var(--line);padding-inline-start:9px;
+    transition:color .15s;
+  }
+  .dev-badge a:hover{color:var(--wa)}
+
+  .hint{
+    position:absolute;bottom:14px;inset-inline-start:14px;font-size:11.5px;color:#5d7288;
+    background:rgba(11,18,25,.7);backdrop-filter:blur(8px);border:1px solid var(--line);
+    padding:7px 12px;border-radius:10px;z-index:5;
+  }
+
+  @media (max-width:900px){
+    .app{flex-direction:column-reverse}
+    .panel{width:100%;flex:0 0 auto;max-height:54vh;border-inline-start:none;border-top:1px solid var(--line)}
+    .stage{flex:1;min-height:46vh}
+    .viewbar{top:auto;bottom:14px;inset-inline-start:50%;transform:translateX(50%)}
+    .hint{display:none}
+    .dev-badge{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="panel">
+    <div class="brand">
+      <h1>حاسبة CBM ورص الحاويات <span class="dot">3D</span></h1>
+      <p>أدخل بيانات الحاوية والكراتين، واحصل على حجم الشحنة ونسبة الاستغلال ومحاكاة ثلاثية الأبعاد لطريقة الرص.</p>
+    </div>
+
+    <!-- بيانات الحاوية -->
+    <section class="card">
+      <h2>بيانات الحاوية</h2>
+      <label class="field">
+        <span>نوع الحاوية</span>
+        <select id="type">
+          <option value="20">20 قدم قياسي — 33.2 CBM</option>
+          <option value="40">40 قدم قياسي — 67.7 CBM</option>
+          <option value="40hc">40 قدم High Cube — 76.3 CBM</option>
+          <option value="45hc">45 قدم High Cube — 86.0 CBM</option>
+        </select>
+      </label>
+      <div class="ctag" id="ctag"></div>
+    </section>
+
+    <!-- بيانات الكراتين -->
+    <section class="card">
+      <h2>بيانات الكراتين</h2>
+      <div class="row3">
+        <label class="field"><span>الطول (سم)</span><input id="cl" type="number" value="60" min="1" step="0.5"></label>
+        <label class="field"><span>العرض (سم)</span><input id="cw" type="number" value="40" min="1" step="0.5"></label>
+        <label class="field"><span>الارتفاع (سم)</span><input id="ch" type="number" value="40" min="1" step="0.5"></label>
+      </div>
+      <div class="row2 mt">
+        <label class="field"><span>عدد الكراتين</span><input id="qty" type="number" value="200" min="1" step="1"></label>
+        <label class="field"><span>وزن الكرتونة (كجم)</span><input id="wt" type="number" value="0" min="0" step="0.1"></label>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="rotate" checked>
+        <span>السماح بتدوير الكرتونة للحصول على أفضل رص</span>
+      </label>
+    </section>
+
+    <!-- النتائج -->
+    <section class="card" id="results"></section>
+
+    <div class="actions">
+      <button class="btn primary" id="replay">▶ إعادة محاكاة التحميل</button>
+    </div>
+
+    <!-- ===== كارت المطوّر + التواصل ===== -->
+    <section class="card dev-card">
+      <div class="dev-head">
+        <div class="dev-avatar">IA</div>
+        <div>
+          <div class="dev-name">م. إبراهيم السيد إبراهيم</div>
+          <div class="dev-role">PMP · تطوير أدوات لوجستية وسلاسل إمداد</div>
+        </div>
+      </div>
+
+      <p class="dev-cta">
+        عايز أداة تساعدك في شغلك؟ <b>تواصل معايا</b> 👇
+      </p>
+
+      <div class="dev-links">
+        <a class="dev-link wa" href="https://wa.me/201018983277" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+          </svg>
+          واتساب
+          <span class="lbl">01018983277</span>
+        </a>
+
+        <a class="dev-link li" href="https://www.linkedin.com/in/ibrahim-mohamed-%F0%9F%87%AA%F0%9F%87%AC-%F0%9F%87%B0%F0%9F%87%BF-pmp-438b4b1a2/" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+          </svg>
+          LinkedIn
+          <span class="lbl">/in/ibrahim-mohamed</span>
+        </a>
+
+        <a class="dev-link gh" href="https://github.com/" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+          </svg>
+          GitHub
+          <span class="lbl">المستودع</span>
+        </a>
+      </div>
+
+      <div class="dev-credit">
+        صُنع بـ <b>❤</b> بواسطة <b>م. إبراهيم السيد إبراهيم</b> — جميع الحقوق محفوظة © 2025
+      </div>
+    </section>
+  </aside>
+
+  <main class="stage">
+    <canvas id="view"></canvas>
+    <div class="viewbar" id="viewbar">
+      <button data-v="iso" class="active">منظور</button>
+      <button data-v="side">جانبي</button>
+      <button data-v="top">أعلى</button>
+      <button data-v="door">من الباب</button>
+      <button data-v="front">من الأمام</button>
+    </div>
+
+    <!-- شارة المطوّر أعلى المشهد -->
+    <div class="dev-badge">
+      <span>تطوير</span> <b>م. إبراهيم السيد</b>
+      <a href="https://wa.me/201018983277" target="_blank" rel="noopener">تواصل 📱</a>
+    </div>
+
+    <div class="hint">اسحب للتدوير · عجلة الماوس للتكبير</div>
+  </main>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* =========================================================
+   1) بيانات الحاويات (المقاسات الداخلية بالمتر)
+   ========================================================= */
+const CONTAINERS = {
+  '20':   { label:'20 قدم قياسي',     L:5.898,  W:2.352, H:2.393, payload:28200, doorW:2.340, doorH:2.281 },
+  '40':   { label:'40 قدم قياسي',     L:12.032, W:2.352, H:2.393, payload:26700, doorW:2.340, doorH:2.281 },
+  '40hc': { label:'40 قدم High Cube', L:12.032, W:2.352, H:2.698, payload:28600, doorW:2.340, doorH:2.585 },
+  '45hc': { label:'45 قدم High Cube', L:13.556, W:2.352, H:2.698, payload:27600, doorW:2.340, doorH:2.585 }
+};
+
+/* =========================================================
+   2) خوارزمية الرص
+   ========================================================= */
+const EPS = 1e-9;
+
+function getOrientations(l, w, h, allowRotate){
+  if (!allowRotate) return [{a:l, b:w, c:h}];
+  const perms = [[l,w,h],[l,h,w],[w,l,h],[w,h,l],[h,l,w],[h,w,l]];
+  const seen = new Set(), out = [];
+  for (const [a,b,c] of perms){
+    const k = `${a.toFixed(5)}|${b.toFixed(5)}|${c.toFixed(5)}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push({a,b,c});
+  }
+  return out;
+}
+
+function packVolume(L, W, H, ors, depth){
+  let best = null;
+  for (const o of ors){
+    const nx = Math.floor(L / o.a + EPS);
+    const ny = Math.floor(W / o.b + EPS);
+    const nz = Math.floor(H / o.c + EPS);
+    if (nx < 1 || ny < 1 || nz < 1) continue;
+
+    const cap = nx * ny * nz;
+    let restCap = 0, restBlocks = [];
+    const remL = L - nx * o.a;
+
+    if (depth > 0 && remL > 1e-3){
+      const r = packVolume(remL, W, H, ors, depth - 1);
+      if (r){ restCap = r.cap; restBlocks = r.blocks; }
+    }
+
+    const total = cap + restCap;
+    if (!best || total > best.cap){
+      best = {
+        cap: total,
+        blocks: [
+          { o, nx, ny, nz, x0: 0 },
+          ...restBlocks.map(b => ({ ...b, x0: b.x0 + nx * o.a }))
+        ]
+      };
+    }
+  }
+  return best;
+}
+
+function buildBoxes(blocks, qty){
+  const boxes = [];
+  let remaining = qty;
+  for (const blk of blocks){
+    if (remaining <= 0) break;
+    const { o, nx, ny, nz, x0 } = blk;
+    for (let ix = 0; ix < nx && remaining > 0; ix++){
+      for (let iz = 0; iz < nz && remaining > 0; iz++){
+        for (let iy = 0; iy < ny && remaining > 0; iy++){
+          boxes.push({
+            x: x0 + ix * o.a,
+            y: iz * o.c,
+            z: iy * o.b,
+            sx: o.a, sy: o.c, sz: o.b
+          });
+          remaining--;
+        }
+      }
+    }
+  }
+  return boxes;
+}
+
+/* =========================================================
+   3) إعداد المشهد ثلاثي الأبعاد
+   ========================================================= */
+const canvas = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 2000);
+camera.position.set(9, 6, 11);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI * 0.495;
+controls.minDistance = 1;
+controls.maxDistance = 120;
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const key = new THREE.DirectionalLight(0xffffff, 2.0); key.position.set(7, 13, 9);  scene.add(key);
+const fill = new THREE.DirectionalLight(0x9fd0ff, 0.9); fill.position.set(-9, 7, -8); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 0.6);  rim.position.set(-4, 5, 10);  scene.add(rim);
+
+const grid = new THREE.GridHelper(80, 80, 0x1c2a38, 0x141d27);
+grid.position.y = -0.003;
+scene.add(grid);
+
+const containerGroup = new THREE.Group();
+scene.add(containerGroup);
+
+let currentDims = { L: 12.032, W: 2.352, H: 2.698 };
+
+function buildContainer(L, W, H){
+  while (containerGroup.children.length){
+    const c = containerGroup.children.pop();
+    c.geometry?.dispose();
+    c.material?.dispose();
+  }
+
+  const boxGeo = new THREE.BoxGeometry(L, H, W);
+
+  const edges = new THREE.LineSegments(
+    new THREE.EdgesGeometry(boxGeo),
+    new THREE.LineBasicMaterial({ color:0x38bdf8, transparent:true, opacity:0.85 })
+  );
+  edges.position.y = H / 2;
+  containerGroup.add(edges);
+
+  const shell = new THREE.Mesh(boxGeo, new THREE.MeshBasicMaterial({
+    color:0x38bdf8, transparent:true, opacity:0.045,
+    side: THREE.DoubleSide, depthWrite:false
+  }));
+  shell.position.y = H / 2;
+  containerGroup.add(shell);
+
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(L, W),
+    new THREE.MeshStandardMaterial({ color:0x141e29, roughness:1, metalness:0 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0.004;
+  containerGroup.add(floor);
+
+  const doorPts = [
+    new THREE.Vector3(L/2, 0, -W/2), new THREE.Vector3(L/2, H, -W/2),
+    new THREE.Vector3(L/2, H,  W/2), new THREE.Vector3(L/2, 0,  W/2),
+    new THREE.Vector3(L/2, 0, -W/2)
+  ];
+  const doorLine = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(doorPts),
+    new THREE.LineBasicMaterial({ color:0xf59e0b, transparent:true, opacity:0.75 })
+  );
+  containerGroup.add(doorLine);
+
+  currentDims = { L, W, H };
+}
+
+let cartonMesh = null;
+let revealCurrent = 0, revealTarget = 0;
+
+function disposeCartons(){
+  if (!cartonMesh) return;
+  scene.remove(cartonMesh);
+  cartonMesh.geometry.dispose();
+  cartonMesh.material.dispose();
+  cartonMesh.dispose();
+  cartonMesh = null;
+}
+
+function setCartons(boxes){
+  disposeCartons();
+  revealCurrent = 0; revealTarget = 0;
+  if (!boxes.length) return;
+
+  const { L, W } = currentDims;
+  const geo = new THREE.BoxGeometry(1, 1, 1);
+  const mat = new THREE.MeshStandardMaterial({ roughness:0.92, metalness:0.02 });
+
+  const mesh = new THREE.InstancedMesh(geo, mat, boxes.length);
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+  const m = new THREE.Matrix4();
+  const col = new THREE.Color();
+  const SHRINK = 0.985;
+
+  boxes.forEach((b, i) => {
+    m.makeScale(b.sx * SHRINK, b.sy * SHRINK, b.sz * SHRINK);
+    m.setPosition(
+      b.x - L/2 + b.sx/2,
+      b.y + b.sy/2,
+      b.z - W/2 + b.sz/2
+    );
+    mesh.setMatrixAt(i, m);
+
+    const t = (i % 9) / 9;
+    col.setHSL(0.072 + t * 0.022, 0.52, 0.44 + (i % 4) * 0.045);
+    mesh.setColorAt(i, col);
+  });
+
+  mesh.instanceMatrix.needsUpdate = true;
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+
+  mesh.count = 0;
+  scene.add(mesh);
+  cartonMesh = mesh;
+  revealTarget = boxes.length;
+}
+
+const VIEWS = {
+  iso:   [ 1.00, 0.62, 1.25],
+  side:  [ 0.03, 0.14, 1.00],
+  top:   [ 0.02, 1.00, 0.03],
+  door:  [ 1.00, 0.20, 0.06],
+  front: [-1.00, 0.22, 0.06]
+};
+
+function setView(name){
+  const { L, W, H } = currentDims;
+  const center = new THREE.Vector3(0, H/2, 0);
+  const R = Math.sqrt(L*L + W*W + H*H) / 2;
+
+  const vFov = THREE.MathUtils.degToRad(camera.fov);
+  const hFov = 2 * Math.atan(Math.tan(vFov/2) * camera.aspect);
+  const dist = R / Math.sin(Math.min(vFov, hFov) / 2) * 1.08;
+
+  const dir = new THREE.Vector3(...VIEWS[name]).normalize().multiplyScalar(dist);
+  camera.position.copy(center).add(dir);
+  controls.target.copy(center);
+  controls.update();
+}
+
+document.getElementById('viewbar').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  document.querySelectorAll('#viewbar button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  setView(btn.dataset.v);
+});
+
+/* =========================================================
+   4) عناصر الواجهة
+   ========================================================= */
+const els = {
+  type:   document.getElementById('type'),
+  cl:     document.getElementById('cl'),
+  cw:     document.getElementById('cw'),
+  ch:     document.getElementById('ch'),
+  qty:    document.getElementById('qty'),
+  wt:     document.getElementById('wt'),
+  rotate: document.getElementById('rotate'),
+  results:document.getElementById('results'),
+  ctag:   document.getElementById('ctag')
+};
+
+const fmt = (n, d = 2) => Number(n).toLocaleString('en-US', {
+  minimumFractionDigits: d, maximumFractionDigits: d
+});
+
+/* =========================================================
+   5) الحساب الرئيسي + التحديث
+   ========================================================= */
+let lastBoxes = [];
+
+function update(){
+  const C = CONTAINERS[els.type.value];
+
+  els.ctag.innerHTML = `
+    <span>الطول <b>${fmt(C.L,3)} م</b></span>
+    <span>العرض <b>${fmt(C.W,3)} م</b></span>
+    <span>الارتفاع <b>${fmt(C.H,3)} م</b></span>
+    <span>الحمولة <b>${C.payload.toLocaleString('en-US')} كجم</b></span>
+  `;
+
+  const cl = parseFloat(els.cl.value);
+  const cw = parseFloat(els.cw.value);
+  const ch = parseFloat(els.ch.value);
+  const qty = Math.max(0, Math.floor(parseFloat(els.qty.value) || 0));
+  const unitWt = Math.max(0, parseFloat(els.wt.value) || 0);
+
+  if (currentDims.L !== C.L || currentDims.W !== C.W || currentDims.H !== C.H){
+    buildContainer(C.L, C.W, C.H);
+    setView(document.querySelector('#viewbar button.active')?.dataset.v || 'iso');
+  }
+
+  if (!(cl > 0 && cw > 0 && ch > 0)){
+    disposeCartons();
+    els.results.innerHTML = `<h2>نتائج الحساب</h2>
+      <div class="banner bad"><span class="ico">⚠</span><span>من فضلك أدخل مقاسات صحيحة للكرتونة (أكبر من صفر).</span></div>`;
+    return;
+  }
+
+  const l = cl / 100, w = cw / 100, h = ch / 100;
+
+  const cartonCBM = l * w * h;
+  const totalCBM  = cartonCBM * qty;
+  const contCBM   = C.L * C.W * C.H;
+
+  const ors  = getOrientations(l, w, h, els.rotate.checked);
+  const pack = packVolume(C.L, C.W, C.H, ors, 2);
+
+  const capacity = pack ? pack.cap : 0;
+  const toPlace  = Math.min(capacity, qty);
+  const blocks   = pack ? pack.blocks : [];
+  const boxes    = buildBoxes(blocks, toPlace);
+
+  lastBoxes = boxes;
+  setCartons(boxes);
+
+  const util  = contCBM > 0 ? (toPlace * cartonCBM) / contCBM * 100 : 0;
+  const fits  = qty > 0 && toPlace >= qty;
+  const shortage = Math.max(0, qty - capacity);
+
+  const main = blocks[0];
+  const arrangement = main ? `${main.nx} × ${main.ny} × ${main.nz}` : '—';
+  const perSlice = main ? main.nx * main.ny * main.nz : 0;
+
+  const totalWeight = qty * unitWt;
+  const overWeight = unitWt > 0 && totalWeight > C.payload;
+
+  const dims = [l, w, h];
+  let doorOK = false;
+  for (const a of dims) for (const b of dims){
+    if (a <= C.doorW + EPS && b <= C.doorH + EPS) doorOK = true;
+  }
+
+  let bannerHTML = '';
+  if (capacity === 0){
+    bannerHTML = `<div class="banner bad"><span class="ico">✕</span>
+      <span>الكرتونة أكبر من المقاس الداخلي للحاوية — لا يمكن تحميلها بهذا الاتجاه.</span></div>`;
+  } else if (!fits){
+    bannerHTML = `<div class="banner bad"><span class="ico">✕</span>
+      <span>الشحنة لا تكفيها حاوية واحدة — يجب تحميل <b>${capacity.toLocaleString('en-US')}</b> كرتونة فقط،
+      ويتبقى <b>${shortage.toLocaleString('en-US')}</b> كرتونة خارج الحاوية.</span></div>`;
+  } else if (overWeight){
+    bannerHTML = `<div class="banner warn"><span class="ico">⚖</span>
+      <span>الحجم مناسب لكن الوزن يتجاوز الحمولة المسموحة (${C.payload.toLocaleString('en-US')} كجم).
+      الوزن الحالي <b>${fmt(totalWeight,1)}</b> كجم.</span></div>`;
+  } else {
+    bannerHTML = `<div class="banner ok"><span class="ico">✓</span>
+      <span>الشحنة تدخل بالكامل داخل الحاوية — المساحة المتبقية
+      <b>${fmt(Math.max(0, contCBM - totalCBM),2)}</b> CBM.</span></div>`;
+  }
+
+  if (!doorOK){
+    bannerHTML += `<div class="banner warn" style="margin-top:8px"><span class="ico">🚪</span>
+      <span>تحذير: مقاس الكرتونة أكبر من فتحة باب الحاوية
+      (${fmt(C.doorW,2)} × ${fmt(C.doorH,2)} م).</span></div>`;
+  }
+
+  els.results.innerHTML = `
+    <h2>نتائج الحساب</h2>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="k">حجم الكرتونة الواحدة</div>
+        <div class="v">${cartonCBM.toFixed(5)} <small>CBM</small></div>
+      </div>
+      <div class="stat">
+        <div class="k">إجمالي حجم الشحنة</div>
+        <div class="v">${fmt(totalCBM,3)} <small>CBM</small></div>
+      </div>
+      <div class="stat">
+        <div class="k">سعة الحاوية</div>
+        <div class="v">${fmt(contCBM,2)} <small>CBM</small></div>
+      </div>
+      <div class="stat">
+        <div class="k">أقصى عدد كراتين</div>
+        <div class="v">${capacity.toLocaleString('en-US')}</div>
+      </div>
+    </div>
+
+    <div class="util">
+      <div class="util-head">
+        <span>نسبة استغلال الحاوية</span>
+        <b>${util.toFixed(1)}%</b>
+      </div>
+      <div class="bar"><i style="width:${Math.min(100, util)}%"></i></div>
+    </div>
+
+    ${bannerHTML}
+
+    <div class="details">
+      <div><span>الترتيب (طول × عرض × ارتفاع)</span><b>${arrangement}</b></div>
+      <div><span>كراتين في المقطع الأول</span><b>${perSlice.toLocaleString('en-US')}</b></div>
+      <div><span>عدد مقاطع الرص</span><b>${blocks.length}</b></div>
+      <div><span>كراتين مرسومة في المشهد</span><b>${boxes.length.toLocaleString('en-US')}</b></div>
+      ${unitWt > 0 ? `<div><span>الوزن الإجمالي للشحنة</span><b>${fmt(totalWeight,1)} كجم</b></div>` : ''}
+    </div>
+  `;
+}
+
+/* =========================================================
+   6) الأحداث
+   ========================================================= */
+let debounceTimer = null;
+function scheduleUpdate(){
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(update, 160);
+}
+
+['input','change'].forEach(ev => {
+  [els.type, els.cl, els.cw, els.ch, els.qty, els.wt, els.rotate].forEach(el => {
+    el.addEventListener(ev, scheduleUpdate);
+  });
+});
+
+document.getElementById('replay').addEventListener('click', () => {
+  if (!cartonMesh || !revealTarget) { update(); return; }
+  cartonMesh.count = 0;
+  revealCurrent = 0;
+});
+
+/* =========================================================
+   7) الحلقة الرئيسية + التحجيم
+   ========================================================= */
+function resize(){
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const w = Math.max(1, Math.floor(rect.width));
+  const h = Math.max(1, Math.floor(rect.height));
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+
+new ResizeObserver(resize).observe(document.querySelector('.stage'));
+window.addEventListener('orientationchange', () => setTimeout(resize, 120));
+
+const clock = new THREE.Clock();
+
+function loop(){
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.1);
+
+  if (cartonMesh && revealCurrent < revealTarget){
+    const speed = Math.max(90, revealTarget / 1.4);
+    revealCurrent = Math.min(revealTarget, revealCurrent + speed * dt);
+    cartonMesh.count = Math.floor(revealCurrent);
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+/* =========================================================
+   8) التشغيل
+   ========================================================= */
+resize();
+buildContainer(currentDims.L, currentDims.W, currentDims.H);
+setView('iso');
+update();
+loop();
+</script>
+</body>
+</html>
